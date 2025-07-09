@@ -1,9 +1,9 @@
 import glob, time, csv, psutil, os
 import torch
-from FastSAM import Inference  # or however you import
+from FastSAM.Inference  SamPredictor, sam_model_registry# or however you import
 
 # 1. Model init
-model = Inference.FastSAMModel(model_path="weights/FastSAM-s.pt")
+model = Inference.FastSAMModel(model_path="/home/copter/FastSAM/weights/FastSAM-s.pt")
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model.to(device)
 
@@ -12,7 +12,7 @@ IOU_THRESHOLDS  = [0.1, 0.3, 0.5, 0.7]
 CONF_THRESHOLDS = [0.1, 0.3, 0.5, 0.7]
 
 # 3. Image list
-imgs = glob.glob("data/images/*.*")
+imgs = glob.glob("/home/copter/jetson_benchmark/bench.py*.*")
 
 # 4. CSV output
 with open("bench_results.csv", "w", newline="") as f:
