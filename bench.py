@@ -1,7 +1,7 @@
 """
-./bench.py \
-  --model_path ~/repos/FastSAM/weights/FastSAM-s.pt \
-  --img_folder "/home/dawesdd1/repos/_Data/drone_birdseye_pov/*.png" \
+python ./bench.py \
+  --model_path "/home/copter/FastSAM/weights/FastSAM-s.pt" \
+  --img_folder "/home/copter/jetson_benchmark/images/*.png" \
   --imgsz 1024 \
   --iou 0.1,0.3,0.5 \
   --conf 0.2,0.6,0.8 \
@@ -83,7 +83,7 @@ def main(args):
 
     # Model init
     device = torch.device(args.device)
-    model = FastSAM(model_path=args.model_path)
+    model = FastSAM(args.model_path)
     model.to(device)
 
     # Gather images
