@@ -16,18 +16,23 @@ import time
 import csv
 import os
 import psutil
-import torch
 from PIL import Image
+import torch
+from ultralytics.nn.tasks import SegmentationModel
 
 # monkey-patch
-_orig_torch_load = torch.load
-def _patched_torch_load(*args, **kwargs):
-    # if PyTorch supports weights_only, enable it
-    if "weights_only" in _orig_torch_load.__code__.co_varnames:
-        kwargs.setdefault("weights_only", True)
-    return _orig_torch_load(*args, **kwargs)
+try:
+    # PyTorch ≥2.6
+    torch.serialization.add_safe_globals([SegmentationModel])
+except AttributeError:
+    # older API
+    torch.serialization.safe_globals([SegmentationModel])
 
-torch.load = _patched_torch_load
+# (Optional) If you still hit weights_only errors, monkey-patch torch.load to force weights_only=False:
+_orig_load = torch.load
+def _patched_load(f, map_location='cpu', **kwargs):
+    return _orig_load(f, map_location=map_location, weights_only=False, **kwargs)
+torch.load = _patched_load
 
 from fastsam import FastSAM
 from utils.tools import convert_box_xywh_to_xyxy
