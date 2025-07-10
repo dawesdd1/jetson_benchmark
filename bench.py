@@ -18,6 +18,17 @@ import os
 import psutil
 import torch
 from PIL import Image
+
+# monkey-patch
+_orig_torch_load = torch.load
+def _patched_torch_load(*args, **kwargs):
+    # if PyTorch supports weights_only, enable it
+    if "weights_only" in _orig_torch_load.__code__.co_varnames:
+        kwargs.setdefault("weights_only", True)
+    return _orig_torch_load(*args, **kwargs)
+
+torch.load = _patched_torch_load
+
 from fastsam import FastSAM
 from utils.tools import convert_box_xywh_to_xyxy
 
