@@ -15,7 +15,7 @@ import glob
 import time
 import csv
 import os
-import psutil
+import psutil  # ← pip install psutil
 from PIL import Image
 import torch
 from ultralytics.nn.tasks import SegmentationModel
@@ -108,8 +108,9 @@ def main(args):
         raise FileNotFoundError(f"No images found with pattern {args.img_folder}")
 
     # Prepare CSV
-    os.makedirs(os.path.dirname(args.output_csv) or ".", exist_ok=True)
-    with open(args.output_csv, "w", newline="") as f:
+    full_path = "output/" + args.output_csv
+    os.makedirs(os.path.dirname(full_path) or ".", exist_ok=True)
+    with open(full_path, "w", newline="") as f:
         writer = csv.writer(f)
         writer.writerow([
             "model", "device", "img", "imgsz",

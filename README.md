@@ -1,19 +1,59 @@
 # jetson_benchmark
 
 
+## Model Weights (all benchmarks)
+
+```bash
+cd mkdir weights
+cd weights
+cd mkdir fastsam mobilesam
+```
+
 
 ## MobileSAM instructions
-```bash 
-pip install git+https://github.com/ChaoningZhang/MobileSAM.git
-```
 
 ```bash 
-conda create -n mobilesam python=3.8 -y
-
-conda activate mobilesam
-
-cd MobileSAM; pip install -e .
+conda create -n mobilesam_py310 python=3.10 -y
+conda activate mobilesam_py310
+pip install git+https://github.com/ChaoningZhang/MobileSAM.git  # installl one-line command
 ```
+
+Install rogue dependencies
+
+``` bash
+pip install psutil Pillow numpy==1.26.1 timm
+```
+
+Install jetback 6.1 compatible torch and torchvision
+
+``` bash
+# install jp61 compatible torch with cuda enabled
+pip3 install --no-cache https://developer.download.nvidia.com/compute/redist/jp/v61/pytorch/torch-2.5.0a0+872d972e41.nv24.08.17622132-cp310-cp310-linux_aarch64.whl
+
+# download torch 0.2.0 (compatible with jp61 torch)
+git clone --branch v0.20.0 https://github.com/pytorch/vision.git
+cd ~/vision/
+python3 setup.py install
+```
+
+
+run the script
+``` bash
+  python ./mobilesam_bench.py \
+  --model_path "/home/copter/jetson_benchmark/weights/mobilesam/mobile_sam.pt" \
+  --img_folder "/home/copter/jetson_benchmark/images/*.png" \
+  --imgsz 256 \
+  --iou 0.1,0.3,0.5 \
+  --conf 0.2,0.6,0.8 \
+  --device cuda \
+  --output_csv mobilesam_bench_256.csv
+```
+
+observability
+
+```watch nvidia_smi```
+
+
 
 
 
@@ -31,8 +71,26 @@ conda activate FastSAM
 
 pip install git+https://github.com/openai/CLIP.git
 
+# Add FastSAM as an importable package (setup,py is in the repo by default), now you can `import fastsam`
+cd FastSAM
+pip install -e .
+```
+
+Note on a jetson nvidia provides wheel files here `https://developer.download.nvidia.com/compute/redist/jp/` for various versions of jetpack
+
+```bash
 # On Jetson Orin (Ubuntu 22.04 -- JP6.1 -- ARM64) 
 pip3 install --no-cache https://developer.download.nvidia.com/compute/redist/jp/v61/pytorch/torch-2.5.0a0+872d972e41.nv24.08.17622132-cp310-cp310-linux_aarch64.whl
+
+# Downgrade numpy to satisfy nvidia
+pip uninstall numpy
+pip install numpy==1.26.1
+
+# download torch 0.2.0 (compatible with jp61 torch)
+git clone --branch v0.20.0 https://github.com/pytorch/vision.git
+cd ~/vision/
+python3 setup.py install
+
 
 # (optional trouble shoot if lib cuSPARSELt in missing
 wget https://developer.download.nvidia.com/compute/cusparselt/0.7.1/local_installers/cusparselt-local-tegra-repo-ubuntu2204-0.7.1_1.0-1_arm64.deb
@@ -42,6 +100,8 @@ sudo apt-get update
 
 # 5. Install the cusparselt libraries using apt
 sudo apt-get -y install libcusparselt0 libcusparselt-dev
+sudo apt install libjpeg-dev libpng-dev libtiff-dev
+sudo apt install -y libjpeg-dev libpng-dev libtiff-dev git build-essential cmake
 
 # verify cuda enabled torch
 python3 -c "import torch; print(torch.cuda.is_available())"

@@ -1,30 +1,30 @@
 """
-python ./mobilesam_bench.py \
-  --model_path "/home/copter/jetson_benchmark/weights/mobilesam/mobile_sam.pt" \
+python ./fastsam_bench.py \
+  --model_path "/home/copter/FastSAM/weights/FastSAM-s.pt" \
   --img_folder "/home/copter/jetson_benchmark/images/*.png" \
   --imgsz 1024 \
   --iou 0.1,0.3,0.5 \
   --conf 0.2,0.6,0.8 \
   --device cuda \
-  --output_csv mobilesam_bench_1024.csv
+  --output_csv fastsam_bench_1024.csv
 
-python ./mobilesam_bench.py \
-  --model_path "/home/copter/jetson_benchmark/weights/mobilesam/mobile_sam.pt" \
+python ./fastsam_bench.py \
+  --model_path "/home/copter/FastSAM/weights/FastSAM-s.pt" \
   --img_folder "/home/copter/jetson_benchmark/images/*.png" \
   --imgsz 512 \
   --iou 0.1,0.3,0.5 \
   --conf 0.2,0.6,0.8 \
   --device cuda \
-  --output_csv mobilesam_bench_512.csv
+  --output_csv fastsam_bench_512.csv
 
-python ./mobilesam_bench.py \
-  --model_path "/home/copter/jetson_benchmark/weights/mobilesam/mobile_sam.pt" \
+python ./fastsam_bench.py \
+  --model_path "/home/copter/FastSAM/weights/FastSAM-s.pt" \
   --img_folder "/home/copter/jetson_benchmark/images/*.png" \
   --imgsz 256 \
   --iou 0.1,0.3,0.5 \
   --conf 0.2,0.6,0.8 \
   --device cuda \
-  --output_csv mobilesam_bench_256.csv
+  --output_csv fastsam_bench_256.csv
 """
 
 #!/usr/bin/env python
@@ -33,41 +33,54 @@ import glob
 import time
 import csv
 import os
-import psutil
+import psutil  # ← pip install psutil
 from PIL import Image
-import numpy as np
 import torch
 from tqdm import tqdm
-from mobile_sam import sam_model_registry, SamAutomaticMaskGenerator
+from ultralytics.nn.tasks import SegmentationModel
+
+# monkey-patch
+try:
+    # PyTorch ≥2.6
+    torch.serialization.add_safe_globals([SegmentationModel])
+except AttributeError:
+    # older API
+    torch.serialization.safe_globals([SegmentationModel])
+
+# (Optional) If you still hit weights_only errors, monkey-patch torch.load to force weights_only=False:
+_orig_load = torch.load
+def _patched_load(f, map_location='cpu', **kwargs):
+    return _orig_load(f, map_location=map_location, weights_only=False, **kwargs)
+torch.load = _patched_load
+
+from fastsam import FastSAM
+from utils.tools import convert_box_xywh_to_xyxy
 
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description="Benchmark Mobile SAM speed & memory over IOU/CONF thresholds"
+        description="Benchmark FastSAM speed & memory over IOU/CONF thresholds"
     )
     parser.add_argument(
-        "--model_path", type=str, required=True,
+        "--model_path", type=str,
+        default="./weights/FastSAM-s.pt",
         help="Path to .pt checkpoint"
-    )
-    parser.add_argument(
-        "--model_type", type=str, default="vit_t",
-        help="Which MobileSAM variant (e.g. 'vit_t', 'vit_l', ...)"
     )
     parser.add_argument(
         "--img_folder", type=str, required=True,
         help="Folder or glob of input images, e.g. '/data/*.jpg'"
     )
     parser.add_argument(
-        "--imgsz", type=int, default=0,
-        help="Resize shorter edge to this size (0 to disable)"
+        "--imgsz", type=int, default=1024,
+        help="Resize shorter edge to this size"
     )
     parser.add_argument(
-        "--iou", type=str, default="0.86",
-        help="Comma-separated list of pred_iou_thresh to test, e.g. '0.5,0.75,0.9'"
+        "--iou", type=str, default="0.5",
+        help="Single IOU or comma-sep list, e.g. '0.1,0.3,0.5'"
     )
     parser.add_argument(
-        "--conf", type=str, default="0.92",
-        help="Comma-separated list of stability_score_thresh to test, e.g. '0.8,0.9,0.95'"
+        "--conf", type=str, default="0.4",
+        help="Single CONF or comma-sep list, e.g. '0.2,0.5,0.8'"
     )
     parser.add_argument(
         "--device", type=str,
@@ -75,25 +88,38 @@ def parse_args():
         help="'cuda', 'cuda:0', or 'cpu'"
     )
     parser.add_argument(
-        "--output_csv", type=str, default="mobile_sam_bench.csv",
+        "--output_csv", type=str, default="bench_results.csv",
         help="Where to save the results"
+    )
+    parser.add_argument(
+        "--retina", action="store_true",
+        help="Use high-resolution masks"
+    )
+    parser.add_argument(
+        "--with_contours", action="store_true",
+        help="Draw mask contours (no effect on speed/mem)"
+    )
+    parser.add_argument(
+        "--better_quality", action="store_true",
+        help="Apply morphologyEx (no effect on speed/mem)"
     )
     return parser.parse_args()
 
 
 def str2list(s, cast_fn=float):
+    # "0.1,0.5" → [0.1, 0.5], or "0.6" → [0.6]
     return [cast_fn(x) for x in s.split(",")]
 
 
 def main(args):
-    # --- Device & Path Checks -----------------------------
-
-    print(f"🔧 Starting Mobile SAM benchmark...")
+    print(f"🚀 Starting FastSAM benchmark...")
     print(f"📁 Model path: {args.model_path}")
     print(f"🖼️  Image folder: {args.img_folder}")
+    print(f"📏 Image size: {args.imgsz}")
     print(f"🎯 Device: {args.device}")
     
-    iou_list = str2list(args.iou, float)
+    # Parse thresholds
+    iou_list  = str2list(args.iou,  float)
     conf_list = str2list(args.conf, float)
     print(f"📊 IOU thresholds: {iou_list}")
     print(f"📊 Confidence thresholds: {conf_list}")
@@ -139,22 +165,19 @@ def main(args):
     if len(imgs) > 3:
         print(f"   ... and {len(imgs) - 3} more")
 
-    # --- Load Model --------------------------------------
-
-    print(f"🤖 Loading Mobile SAM model...")
-    print(f"   Model type: {args.model_type}")
-    print(f"   Checkpoint: {args.model_path}")
+    # Model init
+    print(f"🤖 Loading FastSAM model...")
+    print(f"   Model path: {args.model_path}")
     
     try:
-        sam = sam_model_registry[args.model_type](checkpoint=args.model_path)
+        model = FastSAM(args.model_path)
         print(f"✅ Model loaded successfully")
     except Exception as e:
         print(f"❌ Error loading model: {e}")
         return
 
     print(f"📱 Moving model to device: {device}")
-    sam.to(device=device)
-    sam.eval()
+    model.to(device)
     print(f"✅ Model ready on {device}")
 
     # Prepare CSV
@@ -165,114 +188,123 @@ def main(args):
     total_combinations = len(iou_list) * len(conf_list) * len(imgs)
     print(f"🎯 Total benchmarks to run: {total_combinations}")
 
+    # Additional settings info
+    settings = []
+    if args.retina:
+        settings.append("retina_masks=True")
+    if args.with_contours:
+        settings.append("with_contours=True")
+    if args.better_quality:
+        settings.append("better_quality=True")
+    
+    if settings:
+        print(f"⚙️  Additional settings: {', '.join(settings)}")
+
     with open(full_path, "w", newline="") as f:
         writer = csv.writer(f)
         writer.writerow([
-            "model", "model_type", "device", "img", "imgsz",
-            "pred_iou_thresh", "stability_score_thresh",
-            "time_ms", "gpu_mem_mb", "cpu_mem_mb"
+            "model", "device", "img", "imgsz",
+            "iou", "conf", "time_ms", "gpu_mem_mb", "cpu_mem_mb"
         ])
 
         # Create combinations for progress bar
         combinations = [
-            (pred_iou, stability_score, img_path)
-            for pred_iou in iou_list
-            for stability_score in conf_list
+            (iou, conf, img_path)
+            for iou in iou_list
+            for conf in conf_list
             for img_path in imgs
         ]
         
         # Initialize progress bar
-        progress_bar = tqdm(combinations, desc="🎯 Processing", ncols=100)
+        progress_bar = tqdm(combinations, desc="🚀 Processing", ncols=100)
         
-        current_iou = None
-        current_conf = None
-        mask_generator = None
-        
-        # --- Run Benchmark ---------------------------------------
-
-        for pred_iou, stability_score, img_path in progress_bar:
-            # Create new mask generator only when thresholds change
-            if current_iou != pred_iou or current_conf != stability_score:
-                current_iou = pred_iou
-                current_conf = stability_score
-                mask_generator = SamAutomaticMaskGenerator(model=sam)
-                progress_bar.set_postfix({
-                    "IOU": f"{pred_iou:.1f}",
-                    "Conf": f"{stability_score:.1f}",
-                    "Image": os.path.basename(img_path)[:15]
-                })
+        for iou, conf, img_path in progress_bar:
+            # Update progress bar description
+            progress_bar.set_postfix({
+                "IOU": f"{iou:.1f}",
+                "Conf": f"{conf:.1f}",
+                "Image": os.path.basename(img_path)[:15]
+            })
             
             # Reset GPU counters
             if device.type == "cuda":
                 torch.cuda.reset_peak_memory_stats(device)
                 torch.cuda.synchronize(device)
 
+            # Record CPU RSS before
             proc = psutil.Process(os.getpid())
-            rss_before = proc.memory_info().rss / 1024**2
+            rss_before = proc.memory_info().rss / 1024**2  # MB
 
-            # Load and optionally resize
+            # Load image
             img = Image.open(img_path).convert("RGB")
             original_size = img.size
-            
-            if args.imgsz > 0:
-                w, h = img.size
-                if h < w:
-                    new_h = args.imgsz
-                    new_w = int(w * args.imgsz / h)
-                else:
-                    new_w = args.imgsz
-                    new_h = int(h * args.imgsz / w)
-                img = img.resize((new_w, new_h))
-            
-            img_np = np.array(img)
 
-            # Run mask generation
+            # Run FastSAM inference
             t0 = time.perf_counter()
             
             try:
-                masks = mask_generator.generate(img_np)
+                everything = model(
+                    img,
+                    device=device,
+                    imgsz=args.imgsz,
+                    conf=conf,
+                    iou=iou,
+                    retina_masks=args.retina
+                )
+                
+                # Force sync & time
                 if device.type == "cuda":
                     torch.cuda.synchronize(device)
                 t1 = time.perf_counter()
+                
+                # Try to get mask count if possible
+                try:
+                    if hasattr(everything, 'masks') and everything.masks is not None:
+                        mask_count = len(everything.masks)
+                    elif hasattr(everything, 'boxes') and everything.boxes is not None:
+                        mask_count = len(everything.boxes)
+                    else:
+                        mask_count = "N/A"
+                except:
+                    mask_count = "N/A"
                 
             except Exception as e:
                 tqdm.write(f"❌ Error processing {os.path.basename(img_path)}: {e}")
                 continue
 
             # Measure performance
-            elapsed_ms = (t1 - t0) * 1e3
+            delta_cpu = proc.memory_info().rss / 1024**2 - rss_before
             peak_gpu = (
                 torch.cuda.max_memory_allocated(device) / 1024**2
                 if device.type == "cuda" else 0.0
             )
-            delta_cpu = proc.memory_info().rss / 1024**2 - rss_before
+            elapsed_ms = (t1 - t0) * 1e3
 
             # Update progress bar with current metrics
             progress_bar.set_postfix({
-                "IOU": f"{pred_iou:.1f}",
-                "Conf": f"{stability_score:.1f}",
+                "IOU": f"{iou:.1f}",
+                "Conf": f"{conf:.1f}",
                 "Time": f"{elapsed_ms:.0f}ms",
                 "GPU": f"{peak_gpu:.0f}MB",
-                "Masks": len(masks)
+                "Masks": str(mask_count)
             })
 
             writer.writerow([
                 os.path.basename(args.model_path),
-                args.model_type,
                 args.device,
                 os.path.basename(img_path),
                 args.imgsz,
-                pred_iou,
-                stability_score,
+                iou,
+                conf,
                 f"{elapsed_ms:.1f}",
                 f"{peak_gpu:.1f}",
                 f"{delta_cpu:.1f}",
             ])
 
-    print(f"\n🎉 Mobile SAM benchmark complete!")
+    print(f"\n🎉 FastSAM benchmark complete!")
     print(f"📊 Results saved to: {full_path}")
 
 
-if __name__ == "__main__":
+if __name__=="__main__":
     args = parse_args()
     main(args)
