@@ -27,10 +27,14 @@ pip install psutil Pillow numpy==1.26.1 timm
 Install jetback 6.1 compatible torch and torchvision
 
 ``` bash
+# First, clean up the CPU version
+python -m pip uninstall torch torchvision --user -y
+
 # install jp61 compatible torch with cuda enabled
 pip3 install --no-cache https://developer.download.nvidia.com/compute/redist/jp/v61/pytorch/torch-2.5.0a0+872d972e41.nv24.08.17622132-cp310-cp310-linux_aarch64.whl
 
 # download torch 0.2.0 (compatible with jp61 torch)
+cd ~
 git clone --branch v0.20.0 https://github.com/pytorch/vision.git
 cd ~/vision/
 python3 setup.py install

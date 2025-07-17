@@ -19,7 +19,8 @@ model_configs = {
     'FastSAM-s': ['fp32', 'fp16']
 }
 
-output_dir = "/home/dawesdd1/repos/jetson_benchmark/tensorrt_engines"
+# output_dir = "/home/dawesdd1/repos/jetson_benchmark/tensorrt_engines"
+output_dir = "/home/copter/jetson_benchmark/tensorrt_engines"  # Jetson Orin Path
 os.makedirs(output_dir, exist_ok=True)
 
 print("--- 🚀 Starting FastSAM to TensorRT Conversion ---")
@@ -27,7 +28,8 @@ print("--- 🚀 Starting FastSAM to TensorRT Conversion ---")
 for model_name, precisions in model_configs.items():
     print(f"\nProcessing {model_name}...")
     # Load FastSAM model
-    model = YOLO(f'/home/dawesdd1/repos/FastSAM/weights/{model_name}.pt')
+    # model = YOLO(f'/home/dawesdd1/repos/FastSAM/weights/{model_name}.pt')
+    model = YOLO(f'/home/copter/FastSAM/weights/{model_name}.pt')       # Jetson Orin Path
 
     for precision in precisions:
         half_precision = (precision == 'fp16')
