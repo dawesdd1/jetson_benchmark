@@ -114,3 +114,31 @@ print(f'CUDA still available: {torch.cuda.is_available()}')
 
 python3.10 jetson_benchmark/tensor_rt/fastsam_trt_convert.py
 ```
+
+
+## NanoSAM (Nvidian Repo)
+
+
+```
+cd ~
+mkdir onnx_models
+
+# ...download models there
+
+
+trtexec \
+    --onnx=onnx_models/mobile_sam_mask_decoder.onnx \
+    --saveEngine=onnx_models/mobile_sam_mask_decoder.engine \
+    --minShapes=point_coords:1x1x2,point_labels:1x1 \
+    --optShapes=point_coords:1x1x2,point_labels:1x1 \
+    --maxShapes=point_coords:1x10x2,point_labels:1x10
+
+
+trtexec \
+    --onnx=onnx_models/mobile_sam_encoder.onnx \
+    --saveEngine=onnx_models/mobile_sam_encoder.engine \
+    --fp16
+
+# Monitor progress via...
+tegrastats
+```
