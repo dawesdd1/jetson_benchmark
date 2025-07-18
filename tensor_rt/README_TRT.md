@@ -119,24 +119,37 @@ python3.10 jetson_benchmark/tensor_rt/fastsam_trt_convert.py
 ## NanoSAM (Nvidian Repo)
 
 
-```
+```bash
 cd ~
 mkdir onnx_models
 
 # ...download models there
 
+# trtexec not found
+export PATH="/usr/src/tensorrt/bin:$PATH"
+source ~/.bashrc
+trtexec --help
 
+# FP16
 trtexec \
     --onnx=onnx_models/mobile_sam_mask_decoder.onnx \
-    --saveEngine=onnx_models/mobile_sam_mask_decoder.engine \
+    --saveEngine=onnx_models/mobile_sam_mask_decoder_fp16.engine \
+    --minShapes=point_coords:1x1x2,point_labels:1x1 \
+    --optShapes=point_coords:1x1x2,point_labels:1x1 \
+    --maxShapes=point_coords:1x10x2,point_labels:1x10 \
+    --fp16
+
+# FP32
+trtexec \
+    --onnx=onnx_models/mobile_sam_mask_decoder.onnx \
+    --saveEngine=onnx_models/mobile_sam_mask_decoder_fp32.engine \
     --minShapes=point_coords:1x1x2,point_labels:1x1 \
     --optShapes=point_coords:1x1x2,point_labels:1x1 \
     --maxShapes=point_coords:1x10x2,point_labels:1x10
 
-
 trtexec \
     --onnx=onnx_models/mobile_sam_encoder.onnx \
-    --saveEngine=onnx_models/mobile_sam_encoder.engine \
+    --saveEngine=onnx_models/mobile_sam_encoder_fp16.engine \
     --fp16
 
 # Monitor progress via...

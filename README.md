@@ -1,5 +1,10 @@
 # jetson_benchmark
 
+## SYSTEM SPECS
+```
+cat /sys/firmware/devicetree/base/model
+cat /etc/nv_tegra_release
+```
 
 ## Model Weights (all benchmarks)
 
@@ -110,4 +115,69 @@ sudo apt install -y libjpeg-dev libpng-dev libtiff-dev git build-essential cmake
 # verify cuda enabled torch
 python3 -c "import torch; print(torch.cuda.is_available())"
 
+```
+
+# NanoSAM (MobileSAM Variant)
+
+```bash
+# Create Jetson jp61 conda env
+conda create -n NanoSAM python=3.10 -y
+conda activate NanoSAM
+
+# PyTorch on Jetson Orin Starter Pack (Ubuntu 22.04 -- JP6.1 -- ARM64) 
+pip3 install --no-cache https://developer.download.nvidia.com/compute/redist/jp/v61/pytorch/torch-2.5.0a0+872d972e41.nv24.08.17622132-cp310-cp310-linux_aarch64.whl
+# Downgrade numpy to satisfy nvidia
+pip uninstall numpy -y
+pip install numpy==1.26.1
+# download torch 0.2.0 (compatible with jp61 torch)
+cd ~
+git clone --branch v0.20.0 https://github.com/pytorch/vision.git
+cd ~/vision/
+python3 setup.py install
+
+pip install psutil Pillow timm packaging--user --no-deps # avoids user conflicts
+
+# Install torch2trt (required for NanoSAM) && trtexec not found
+export PATH="/usr/src/tensorrt/bin:$PATH"
+source ~/.bashrc
+trtexec --help
+conda activate NanoSAM
+
+
+# Reestablish trtexec python bindings
+sudo apt update
+sudo apt install python3-libnvinfer
+conda activate NanoSAM
+export PYTHONPATH=/usr/lib/python3.10/dist-packages:$PYTHONPATH
+python -c "import tensorrt; print(f'TensorRT version: {tensorrt.__version__}')"
+
+# Install torch2trt (required for NanoSAM) && trtexec not found
+cd ~
+git clone https://github.com/NVIDIA-AI-IOT/torch2trt
+cd torch2trt
+conda activate NanoSAM
+python -c "import tensorrt; print(f'TensorRT version: {tensorrt.__version__}')"
+python setup.py install
+
+# Install NanoSAM repo
+git clone https://github.com/NVIDIA-AI-IOT/nanosam
+cd nanosam
+python3 setup.py develop --user
+
+### libstdc++ OUT OF DATE ERROR
+# Prepend system library paths to LD_LIBRARY_PATH (Temporary)
+export LD_LIBRARY_PATH=/usr/lib/aarch64-linux-gnu:/lib/aarch64-linux-gnu:$LD_LIBRARY_PATH
+
+# Also ensure PYTHONPATH is still set for TensorRT Python bindings
+export PYTHONPATH=/usr/lib/python3.10/dist-packages:$PYTHONPATH
+
+# cd and run the bench
+cd ~/jetson_benchmark
+python ./nanosam_bench.py \
+  --image_encoder_path "/home/copter/onnx_models/mobile_sam_encoder_fp16.engine" \
+  --mask_decoder_path "/home/copter/onnx_models/mobile_sam_mask_decoder_fp16.engine" \
+  --img_folder "/home/copter/jetson_benchmark/images/*.png" \
+  --device cuda \
+  --num_runs 50 \
+  --output_csv "/home/copter/jetson_benchmark/output/nanosam_bench_fp16_0718T1038.csv"
 ```
