@@ -1,7 +1,7 @@
 # JETSON ORIN TRT SETUP
 
 
-Setp trt
+Setup trt
 
 
 apt install packages
@@ -44,8 +44,6 @@ pip install ultralytics timm
 python -c "import tensorrt; print(f'TensorRT version: {tensorrt.__version__}')"
 python3 tensor_rt/fastsam_trt_convert.py
 ```
-
-
 
 
 ### NON VENV RAW SYSTEM BUILD
@@ -116,7 +114,7 @@ python3.10 jetson_benchmark/tensor_rt/fastsam_trt_convert.py
 ```
 
 
-## NanoSAM (Nvidian Repo)
+## TRTEXEC  
 
 
 ```bash
@@ -130,27 +128,88 @@ export PATH="/usr/src/tensorrt/bin:$PATH"
 source ~/.bashrc
 trtexec --help
 
-# FP16
+# --- FP16 -----------------------------
+
+## FastSAM-s
 trtexec \
-    --onnx=onnx_models/mobile_sam_mask_decoder.onnx \
-    --saveEngine=onnx_models/mobile_sam_mask_decoder_fp16.engine \
+  --onnx="/home/copter/onnx_models/FastSAM-x.onnx" \
+  --saveEngine="/home/copter/engine_models/FastSAM-x_fp16.engine" \
+  --fp16
+
+## FastSAM-x
+trtexec \
+  --onnx="/home/copter/onnx_models/FastSAM-x.onnx" \
+  --saveEngine="/home/copter/engine_models/FastSAM-x_fp16.engine" \
+  --fp16
+
+## MobileSAM (zhudongwork)
+trtexec \
+    --onnx=onnx_models/mobile_sam_decoder.onnx \
+    --saveEngine=engine_models/mobile_sam_decoder_fp16.engine \
     --minShapes=point_coords:1x1x2,point_labels:1x1 \
     --optShapes=point_coords:1x1x2,point_labels:1x1 \
     --maxShapes=point_coords:1x10x2,point_labels:1x10 \
     --fp16
 
-# FP32
 trtexec \
-    --onnx=onnx_models/mobile_sam_mask_decoder.onnx \
-    --saveEngine=onnx_models/mobile_sam_mask_decoder_fp32.engine \
+    --onnx=onnx_models/mobile_sam_encoder.onnx \
+    --saveEngine=engine_models/mobile_sam_encoder_fp16.engine \
+    --fp16
+
+## NanoSAM (Nvidia)
+# mask decoder
+trtexec \
+    --onnx="/home/copter/onnx_models/nanosam official implementation/mobile_sam_mask_decoder.onnx" \
+    --saveEngine="/home/copter/engine_models/nvidia_nanosam_mask_decoder_fp16.engine" \
+    --minShapes=point_coords:1x1x2,point_labels:1x1 \
+    --optShapes=point_coords:1x1x2,point_labels:1x1 \
+    --maxShapes=point_coords:1x10x2,point_labels:1x10 \
+    --fp16
+
+# resnet-18 encoder
+trtexec \
+    --onnx="/home/copter/onnx_models/nanosam official implementation/resnet18_image_encoder.onnx" \
+    --saveEngine="/home/copter/engine_models/nvidia_nanosam_resnet18_image_encoder_fp16.engine" \
+    --fp16
+
+# --- FP32 -------------------------------
+
+## FastSAM-s
+trtexec \
+  --onnx="/home/copter/onnx_models/FastSAM-x.onnx" \
+  --saveEngine="/home/copter/engine_models/FastSAM-x_fp16.engine" 
+
+## FastSAM-x
+trtexec \
+  --onnx="/home/copter/onnx_models/FastSAM-x.onnx" \
+  --saveEngine="/home/copter/engine_models/FastSAM-x_fp16.engine" 
+
+## MobileSAM (zhudongwork)
+trtexec \
+    --onnx="/home/copter/onnx_models/mobile_sam_decoder.onnx" \
+    --saveEngine="/home/copter/engine_models/mobile_sam_decoder_fp32.engine" \
+    --minShapes=input:1x3x1024x1024 \
+    --optShapes=input:1x3x1024x1024 \
+    --maxShapes=input:1x3x1024x1024
+
+# resnet-18 encoder
+trtexec \
+    --onnx="/home/copter/onnx_models/mobile_sam_encoder.onnx" \
+    --saveEngine="/home/copter/engine_models/mobile_sam_encoder_fp32.engine"
+
+## NanoSAM (Nvidia)
+# mask decoder
+trtexec \
+    --onnx="/home/copter/onnx_models/nanosam official implementation/mobile_sam_mask_decoder.onnx" \
+    --saveEngine="/home/copter/engine_models/nvidia_nanosam_mask_decoder_fp32.engine" \
     --minShapes=point_coords:1x1x2,point_labels:1x1 \
     --optShapes=point_coords:1x1x2,point_labels:1x1 \
     --maxShapes=point_coords:1x10x2,point_labels:1x10
 
+# resnet-18 encoder
 trtexec \
-    --onnx=onnx_models/mobile_sam_encoder.onnx \
-    --saveEngine=onnx_models/mobile_sam_encoder_fp16.engine \
-    --fp16
+    --onnx="/home/copter/onnx_models/nanosam official implementation/resnet18_image_encoder.onnx" \
+    --saveEngine="/home/copter/engine_models/nvidia_nanosam_resnet18_image_encoder_fp32.engine"
 
 # Monitor progress via...
 tegrastats

@@ -11,6 +11,7 @@ python3 tensor_rt/fastsam_trt_convert.py
 """
 
 import os
+os.environ['LD_LIBRARY_PATH'] = '/usr/lib/aarch64-linux-gnu:' + os.environ.get('LD_LIBRARY_PATH', '')
 from ultralytics import YOLO
 
 # Define the models and precisions to export
@@ -18,6 +19,8 @@ model_configs = {
     'FastSAM-x': ['fp32', 'fp16'],
     'FastSAM-s': ['fp32', 'fp16']
 }
+
+IMGSZ = 640
 
 # output_dir = "/home/dawesdd1/repos/jetson_benchmark/tensorrt_engines"
 output_dir = "/home/copter/jetson_benchmark/tensorrt_engines"  # Jetson Orin Path
@@ -33,7 +36,7 @@ for model_name, precisions in model_configs.items():
 
     for precision in precisions:
         half_precision = (precision == 'fp16')
-        custom_name = f"{model_name}_{precision}_640.engine"
+        custom_name = f"{model_name}_{precision}_imgzs{IMGSZ}.engine"
         final_path = os.path.join(output_dir, custom_name)
 
         print(f"Exporting {model_name} to TensorRT {precision.upper()} engine as {custom_name}...")
@@ -42,7 +45,7 @@ for model_name, precisions in model_configs.items():
             exported_path = model.export(
                 format='engine',
                 device='0',  # Assuming GPU device '0'. Adjust if necessary.
-                imgsz=640,
+                imgsz=IMGSZ,
                 half=half_precision,
                 verbose=True
             )
