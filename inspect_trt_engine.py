@@ -53,10 +53,13 @@ def inspect_engine(engine_path):
         print(f"Detected Output Names: {output_names}")
 
 if __name__ == "__main__":
+
+    ### LIST OF ENGINES TO INSPECT
     image_encoder_engine_path = "/home/copter/onnx_models/mobile_sam_encoder_fp16.engine"
     mask_decoder_engine_path = "/home/copter/onnx_models/mobile_sam_mask_decoder_fp16.engine"
+    fast_sam_s = "/home/copter/engine_models/FastSAM-s_fp32.engine" 
 
     # Inspect the image encoder engine first, as that's where the current error is.
     # We might need to inspect the mask decoder later.
-    inspect_engine(image_encoder_engine_path)
+    inspect_engine(fast_sam_s)
     # inspect_engine(mask_decoder_engine_path) # Uncomment this later if needed

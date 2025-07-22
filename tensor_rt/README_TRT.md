@@ -82,6 +82,8 @@ export PATH="/usr/src/tensorrt/bin:$PATH"
 source ~/.bashrc
 trtexec --help
 
+# Install ONNX Runtime GPU for JP 6.1
+pip3 install https://github.com/ultralytics/assets/releases/download/v0.0.0/onnxruntime_gpu-1.20.0-cp310-cp310-linux_aarch64.whl
 
 # Verify install
 python3.10 -c "
@@ -174,15 +176,26 @@ trtexec \
 
 # --- FP32 -------------------------------
 
+## FastSAM-s 1024,1024
+trtexec \
+  --onnx="/home/copter/onnx_models/FastSAM-x.onnx" \
+  --saveEngine="/home/copter/engine_models/FastSAM-x_fp32.trt" 
+  --explicitBatch \
+  --minShapes=images:1x3x1024x1024 \
+  --optShapes=images:1x3x1024x1024 \
+  --maxShapes=images:4x3x1024x1024 \
+  --verbose \
+  --device=0
+
 ## FastSAM-s
 trtexec \
   --onnx="/home/copter/onnx_models/FastSAM-x.onnx" \
-  --saveEngine="/home/copter/engine_models/FastSAM-x_fp16.engine" 
+  --saveEngine="/home/copter/engine_models/FastSAM-x_fp32.engine" 
 
 ## FastSAM-x
 trtexec \
   --onnx="/home/copter/onnx_models/FastSAM-x.onnx" \
-  --saveEngine="/home/copter/engine_models/FastSAM-x_fp16.engine" 
+  --saveEngine="/home/copter/engine_models/FastSAM-x_fp32.engine" 
 
 ## MobileSAM (zhudongwork)
 trtexec \

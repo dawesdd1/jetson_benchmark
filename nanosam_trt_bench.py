@@ -1,30 +1,48 @@
 """
 Usage:
-python ./nanosam_bench.py \
-  --image_encoder_path "/home/copter/onnx_models/mobile_sam_encoder_fp16.engine" \
-  --mask_decoder_path "/home/copter/onnx_models/mobile_sam_mask_decoder_fp16.engine" \
+
+conda activate NanoSAM
+export PYTHONPATH=/usr/lib/python3.10/dist-packages:$PYTHONPATH
+python -c "import tensorrt; print(f'TensorRT version: {tensorrt.__version__}')"
+
+### Non Nvidia Benches
+# FP16
+python ./nanosam_trt_bench.py \
+  --image_encoder_path "/home/copter/engine_models/mobile_sam_encoder_fp16.engine" \
+  --mask_decoder_path "/home/copter/engine_models/mobile_sam_mask_decoder_fp16.engine" \
   --img_folder "/home/copter/jetson_benchmark/images/*.png" \
   --device cuda \
   --num_runs 50 \
-  --output_csv "/home/copter/jetson_benchmark/output/nanosam_bench_fp16_0718T1038.csv"
+  --output_csv "/home/copter/jetson_benchmark/output/nanosam_bench_fp16.csv"
 
-python ./nanosam_bench.py \
-  --model_path "/home/copter/jetson_benchmark/weights/mobilesam/mobile_sam.pt" \
+#FP32
+python ./nanosam_trt_bench.py \
+  --image_encoder_path "/home/copter/engine_models/mobile_sam_encoder_fp32.engine" \
+  --mask_decoder_path "/home/copter/engine_models/mobile_sam_mask_decoder_fp32.engine" \
   --img_folder "/home/copter/jetson_benchmark/images/*.png" \
-  --imgsz 512 \
-  --iou 0.1,0.3,0.5 \
-  --conf 0.2,0.6,0.8 \
   --device cuda \
-  --output_csv mobilesam_bench_512.csv
+  --num_runs 50 \
+  --output_csv "/home/copter/jetson_benchmark/output/nanosam_bench_fp32.csv"
 
-python ./nanosam_bench.py \
-  --model_path "/home/copter/jetson_benchmark/weights/mobilesam/mobile_sam.pt" \
+  
+### NVIDIA Benches
+# FP16
+python ./nanosam_trt_bench.py \
+  --image_encoder_path "/home/copter/engine_models/nvidia_nanosam_resnet18_image_encoder_fp16.engine" \
+  --mask_decoder_path "/home/copter/engine_models/nvidia_nanosam_mask_decoder_fp16.engine" \
   --img_folder "/home/copter/jetson_benchmark/images/*.png" \
-  --imgsz 256 \
-  --iou 0.1,0.3,0.5 \
-  --conf 0.2,0.6,0.8 \
   --device cuda \
-  --output_csv mobilesam_bench_256.csv
+  --num_runs 50 \
+  --output_csv "/home/copter/jetson_benchmark/output/nanosam_bench_fp16.csv"
+
+#FP32
+python ./nanosam_trt_bench.py \
+  --image_encoder_path "/home/copter/engine_models/nvidia_nanosam_resnet18_image_encoder_fp32.engine" \
+  --mask_decoder_path "/home/copter/engine_models/nvidia_nanosam_mask_decoder_fp32.engine" \
+  --img_folder "/home/copter/jetson_benchmark/images/*.png" \
+  --device cuda \
+  --num_runs 50 \
+  --output_csv "/home/copter/jetson_benchmark/output/nanosam_bench_fp32.csv"
 """
 
 import argparse
@@ -41,6 +59,12 @@ from datetime import datetime
 
 def str2list(s, type_func):
     return [type_func(item) for item in s.split(',')]
+
+def get_gpu_memory_mb():
+    """Get current GPU memory usage in MB"""
+    if torch.cuda.is_available():
+        return torch.cuda.memory_allocated() / 1024**2  # Convert bytes to MB
+    return 0
 
 def main():
     parser = argparse.ArgumentParser(description="Benchmark NanoSAM inference.")
@@ -61,7 +85,6 @@ def main():
     
     args = parser.parse_args()
 
-    # --- ADD THIS NEW BLOCK HERE, right after args = parser.parse_args() ---
     if args.output_csv:
         # Get current datetime
         now = datetime.now()
@@ -84,9 +107,13 @@ def main():
     device = torch.device(args.device)
     print(f"✅ Device set to: {device}")
     
+    # Initialize memory tracking variables
+    memory_tracking_enabled = False
+    
     if device.type == "cuda":
         print(f"🔥 CUDA available: {torch.cuda.is_available()}")
         if torch.cuda.is_available():
+            memory_tracking_enabled = True
             gpu_props = torch.cuda.get_device_properties(0)
             total_memory = gpu_props.total_memory / 1024**3
             allocated_memory = torch.cuda.memory_allocated(0) / 1024**3
@@ -128,10 +155,21 @@ def main():
     # --- Load Model --------------------------------------
     print(f"🧠 Loading NanoSAM model...")
     try:
+        # Clear GPU cache before loading model
+        if memory_tracking_enabled:
+            torch.cuda.empty_cache()
+            baseline_memory = get_gpu_memory_mb()
+            print(f"📊 Baseline GPU memory: {baseline_memory:.1f} MB")
+        
         predictor = Predictor(
             image_encoder_engine=args.image_encoder_path,
             mask_decoder_engine=args.mask_decoder_path
         )
+        
+        if memory_tracking_enabled:
+            model_memory = get_gpu_memory_mb()
+            print(f"📊 GPU memory after model load: {model_memory:.1f} MB (+{model_memory - baseline_memory:.1f} MB)")
+        
         print("✅ NanoSAM model loaded successfully.")
     except Exception as e:
         print(f"❌ Error loading NanoSAM model: {e}")
@@ -140,6 +178,7 @@ def main():
     # --- Benchmarking --------------------------------------
     image_encoder_times = []
     full_pipeline_times = []
+    peak_memory_usage = []
     
     # Use a single sample image for consistent benchmarking, or iterate through a few
     # For a fair benchmark, it's often good to use a representative image size/type.
@@ -157,19 +196,36 @@ def main():
     total_runs = args.num_warmup + args.num_runs
     with tqdm(total=total_runs, desc="Benchmarking NanoSAM", unit="run") as pbar:
         for i in range(total_runs):
+            # Clear GPU cache before each run for consistent memory measurements
+            if memory_tracking_enabled:
+                torch.cuda.empty_cache()
+                pre_run_memory = get_gpu_memory_mb()
+            
             # Benchmarking Image Encoder
             start_time_image_encoder = time.perf_counter()
             predictor.set_image(sample_image)
             end_time_image_encoder = time.perf_counter()
+            
+            # Check memory after image encoding
+            if memory_tracking_enabled:
+                post_encoder_memory = get_gpu_memory_mb()
             
             # Benchmarking Full Pipeline
             start_time_full_pipeline = time.perf_counter()
             _masks, _scores, _logits = predictor.predict(dummy_point, dummy_label)
             end_time_full_pipeline = time.perf_counter()
 
+            # Check peak memory usage
+            if memory_tracking_enabled:
+                post_predict_memory = get_gpu_memory_mb()
+                run_peak_memory = max(post_encoder_memory, post_predict_memory) - pre_run_memory
+            else:
+                run_peak_memory = 0
+
             if i >= args.num_warmup:
                 image_encoder_times.append((end_time_image_encoder - start_time_image_encoder) * 1000) # in ms
                 full_pipeline_times.append((end_time_full_pipeline - start_time_full_pipeline) * 1000) # in ms
+                peak_memory_usage.append(run_peak_memory)
             
             pbar.update(1)
             if i == args.num_warmup - 1:
@@ -177,10 +233,17 @@ def main():
     
     avg_image_encoder_time = np.mean(image_encoder_times)
     avg_full_pipeline_time = np.mean(full_pipeline_times)
+    avg_peak_memory = np.mean(peak_memory_usage) if memory_tracking_enabled else 0
+    max_peak_memory = np.max(peak_memory_usage) if memory_tracking_enabled else 0
 
     print("\n--- Benchmark Results ---")
     print(f"Image Encoder Average Time: {avg_image_encoder_time:.2f} ms")
     print(f"Full Pipeline Average Time: {avg_full_pipeline_time:.2f} ms")
+    if memory_tracking_enabled:
+        print(f"Average Peak GPU Memory Usage: {avg_peak_memory:.1f} MB")
+        print(f"Maximum Peak GPU Memory Usage: {max_peak_memory:.1f} MB")
+    else:
+        print("GPU Memory tracking: Not available (CPU mode)")
     print("-------------------------")
 
     # --- Save results to CSV (if output_csv flag is provided) ---
@@ -192,12 +255,20 @@ def main():
 
         try:
             with open(args.output_csv, 'w', newline='') as csvfile:
-                fieldnames = ['Metric', 'Time (ms)']
+                fieldnames = ['Metric', 'Value', 'Unit']
                 writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 
                 writer.writeheader()
-                writer.writerow({'Metric': 'Image Encoder', 'Time (ms)': f'{avg_image_encoder_time:.2f}'})
-                writer.writerow({'Metric': 'Full Pipeline', 'Time (ms)': f'{avg_full_pipeline_time:.2f}'})
+                writer.writerow({'Metric': 'Image Encoder Average Time', 'Value': f'{avg_image_encoder_time:.2f}', 'Unit': 'ms'})
+                writer.writerow({'Metric': 'Full Pipeline Average Time', 'Value': f'{avg_full_pipeline_time:.2f}', 'Unit': 'ms'})
+                
+                if memory_tracking_enabled:
+                    writer.writerow({'Metric': 'Average Peak GPU Memory Usage', 'Value': f'{avg_peak_memory:.1f}', 'Unit': 'MB'})
+                    writer.writerow({'Metric': 'Maximum Peak GPU Memory Usage', 'Value': f'{max_peak_memory:.1f}', 'Unit': 'MB'})
+                else:
+                    writer.writerow({'Metric': 'Average Peak GPU Memory Usage', 'Value': 'N/A', 'Unit': 'CPU mode'})
+                    writer.writerow({'Metric': 'Maximum Peak GPU Memory Usage', 'Value': 'N/A', 'Unit': 'CPU mode'})
+                    
             print(f"✅ Benchmark results saved to: {args.output_csv}")
         except Exception as e:
             print(f"❌ Error saving results to CSV: {e}")

@@ -1,6 +1,9 @@
+"python /home/copter/jetson_benchmark/utils/engine_fp_inspect.py"
+
 import tensorrt as trt
 
-engine_path = "your_model.engine"
+# engine_path = "your_model.engine"
+engine_path = "/home/copter/engine_models/nvidia_nanosam_resnet18_image_encoder_fp16.engine"
 logger = trt.Logger(trt.Logger.VERBOSE) # Use VERBOSE for more details
 
 with open(engine_path, "rb") as f, trt.Runtime(logger) as runtime:
