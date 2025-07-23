@@ -5,9 +5,9 @@ conda activate NanoSAM
 export PYTHONPATH=/usr/lib/python3.10/dist-packages:$PYTHONPATH
 python -c "import tensorrt; print(f'TensorRT version: {tensorrt.__version__}')"
 
-### Non Nvidia Benches
+### Zhudongwork Benches
 # FP16
-python ./nanosam_trt_bench.py \
+python /home/copter/jetson_benchmark/zhudongwork_mobilesam_trt_bench.py \
   --image_encoder_path "/home/copter/engine_models/mobile_sam_encoder_fp16.engine" \
   --mask_decoder_path "/home/copter/engine_models/mobile_sam_mask_decoder_fp16.engine" \
   --img_folder "/home/copter/jetson_benchmark/images/*.png" \
@@ -16,7 +16,7 @@ python ./nanosam_trt_bench.py \
   --output_csv "/home/copter/jetson_benchmark/output/nanosam_bench_fp16.csv"
 
 #FP32
-python ./nanosam_trt_bench.py \
+python /home/copter/jetson_benchmark/zhudongwork_mobilesam_trt_bench.py \
   --image_encoder_path "/home/copter/engine_models/mobile_sam_encoder_fp32.engine" \
   --mask_decoder_path "/home/copter/engine_models/mobile_sam_mask_decoder_fp32.engine" \
   --img_folder "/home/copter/jetson_benchmark/images/*.png" \
@@ -24,25 +24,7 @@ python ./nanosam_trt_bench.py \
   --num_runs 50 \
   --output_csv "/home/copter/jetson_benchmark/output/nanosam_bench_fp32.csv"
 
-  
-### NVIDIA Benches
-# FP16
-python ./nanosam_trt_bench.py \
-  --image_encoder_path "/home/copter/engine_models/nvidia_nanosam_resnet18_image_encoder_fp16.engine" \
-  --mask_decoder_path "/home/copter/engine_models/nvidia_nanosam_mask_decoder_fp16.engine" \
-  --img_folder "/home/copter/jetson_benchmark/images/*.png" \
-  --device cuda \
-  --num_runs 50 \
-  --output_csv "/home/copter/jetson_benchmark/output/nanosam_bench_fp16.csv"
 
-#FP32
-python ./nanosam_trt_bench.py \
-  --image_encoder_path "/home/copter/engine_models/nvidia_nanosam_resnet18_image_encoder_fp32.engine" \
-  --mask_decoder_path "/home/copter/engine_models/nvidia_nanosam_mask_decoder_fp32.engine" \
-  --img_folder "/home/copter/jetson_benchmark/images/*.png" \
-  --device cuda \
-  --num_runs 50 \
-  --output_csv "/home/copter/jetson_benchmark/output/nanosam_bench_fp32.csv"
 """
 
 import argparse

@@ -1,0 +1,5 @@
+Metric,Value,Unit
+Image Encoder Average Time,87.36,ms
+Full Pipeline Average Time,1.31,ms
+Average Peak GPU Memory Usage,0.0,MB
+Maximum Peak GPU Memory Usage,0.0,MB

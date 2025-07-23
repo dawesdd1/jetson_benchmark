@@ -1,0 +1,163 @@
+🔍 Comprehensive Conda Environment Inspector
+============================================================
+Environment: Conda Environment: tensorrt
+Inspection Date: Wed Jul 23 11:03:58 AM EDT 2025
+============================================================
+🐧 Ubuntu System Information
+----------------------------------------
+   OS: Ubuntu 22.04.5 LTS
+   Version ID: 22.04
+   LSB: Ubuntu 22.04.5 LTS
+   Kernel: 5.15.148-tegra
+   Architecture: aarch64
+
+🚀 JetPack Information
+----------------------------------------
+   Tegra Release: # R36 (release), REVISION: 4.4, GCID: 41062509, BOARD: generic, EABI: aarch64, DATE: Mon Jun 16 16:07:13 UTC 2025
+# KERNEL_VARIANT: oot
+TARGET_USERSPACE_LIB_DIR=nvidia
+TARGET_USERSPACE_LIB_DIR_PATH=usr/lib/aarch64-linux-gnu/nvidia
+   Jetson Release: Software part of jetson-stats 4.3.2 - (c) 2024, Raffaello Bonghi
+Jetpack missing!
+ - Model: NVIDIA Jetson AGX Orin Developer Kit
+ - L4T: 36.4.4
+NV Power Mode[2]: MODE_30W
+Serial Number: [XXX Show with: jetson_release -s XXX]
+Hardware:
+ - 699-level Part Number: 699-13701-0005-501 G.0
+ - P-Number: p3701-0005
+ - Module: NVIDIA Jetson AGX Orin (64GB ram)
+ - SoC: tegra234
+ - CUDA Arch BIN: 8.7
+Platform:
+ - Machine: aarch64
+ - System: Linux
+ - Distribution: Ubuntu 22.04 Jammy Jellyfish
+ - Release: 5.15.148-tegra
+ - Python: 3.10.12
+jtop:
+ - Version: 4.3.2
+ - Service: Active
+Libraries:
+ - CUDA: 12.6.68
+ - cuDNN: 9.3.0.75
+ - TensorRT: 10.3.0.30
+ - VPI: 3.2.4
+ - Vulkan: 1.3.204
+ - OpenCV: 4.8.0 - with CUDA: NO
+   L4T Core Version: 36.4.4-20250616085344
+   CUDA Version: 12.6.68
+   NVIDIA Driver: 540.4.0
+   Device Model: NVIDIA Jetson AGX Orin Developer Kit
+
+🔧 Critical C++ Libraries
+----------------------------------------
+   System GLIBC: ldd (Ubuntu GLIBC 2.35-0ubuntu3.10) 2.35
+
+   🐍 Conda Environment C++ Libraries (tensorrt):
+     libstdc++.so.6 -> /home/copter/miniconda3/envs/tensorrt/lib/libstdc++.so.6.0.34
+     GLIBCXX versions available:
+       _ZSt11try_to_lock@@GLIBCXX_3.4.11
+       _ZNKSt14basic_ofstreamIwSt11char_traitsIwEE7is_openEv@@GLIBCXX_3.4.5
+       GLIBCXX_3.4.17
+       GLIBCXX_3.4.4
+       GLIBCXX_3.4.33
+       _ZNKSs15_M_check_lengthEmmPKc@@GLIBCXX_3.4.5
+       _ZNKSt14basic_ifstreamIwSt11char_traitsIwEE7is_openEv@GLIBCXX_3.4
+       _ZNSs4_Rep26_M_set_length_and_sharableEm@@GLIBCXX_3.4.5
+       GLIBCXX_3.4.26
+       _ZNKSs11_M_disjunctEPKc@GLIBCXX_3.4
+
+   🖥️  System C++ Libraries:
+     GLIBCXX versions available:
+       GLIBCXX_3.4.22
+       GLIBCXX_3.4.23
+       GLIBCXX_3.4.24
+       GLIBCXX_3.4.25
+       GLIBCXX_3.4.26
+       GLIBCXX_3.4.27
+       GLIBCXX_3.4.28
+       GLIBCXX_3.4.29
+       GLIBCXX_3.4.30
+   System GCC: gcc (Ubuntu 11.4.0-1ubuntu1~22.04) 11.4.0
+   System G++: g++ (Ubuntu 11.4.0-1ubuntu1~22.04) 11.4.0
+
+   🖥️  System libstdc++ location:
+     libstdc++.so.6 -> /usr/lib/aarch64-linux-gnu/libstdc++.so.6.0.30
+
+   🐍 Python's libstdc++ (what packages will use):
+     Python finds libstdc++ at: /home/copter/miniconda3/envs/tensorrt/lib/libstdc++.so.6
+   📚 LD_LIBRARY_PATH: /usr/local/cuda-12.6/lib64::/usr/local/cuda-12.6/lib64
+
+   ⚠️  Important: Conda packages will typically use:
+     - Conda environment libraries from /home/copter/miniconda3/envs/tensorrt/lib/
+   💡 C++ ABI mismatches between these can cause crashes!
+
+🐍 Python Environment
+----------------------------------------
+   Python Version: 3.10.18 (main, Jun  5 2025, 13:08:10) [GCC 11.2.0]
+   Python Executable: /home/copter/miniconda3/envs/tensorrt/bin/python
+   Python Path: /home/copter/jetson_benchmark/utils
+   Conda Environment: tensorrt
+   Conda Prefix: /home/copter/miniconda3/envs/tensorrt
+   Virtual Environment: Not in virtual environment
+
+📦 Key Package Versions
+----------------------------------------
+   numpy           : 1.26.4
+   pandas          : 2.3.1
+   opencv-python   : 4.8.0
+   pillow          : 11.3.0
+   matplotlib      : 3.10.3
+   torch           : 2.5.0a0+872d972e41.nv24.08
+   torchvision     : Import successful, version not found
+   tensorflow      : Import successful, version not found
+   keras           : Import successful, version not found
+   tensorrt        : 10.3.0
+   onnx            : 1.16.0
+   onnxruntime     : Import successful, version not found
+   onnxruntime-gpu : Import successful, version not found
+   pycuda          : Import successful, version not found
+   cupy            : Import successful, version not found
+   numba           : Import successful, version not found
+   scipy           : 1.15.3
+   scikit-learn    : Import successful, version not found
+   tqdm            : 4.67.1
+   requests        : 2.32.4
+   jupyter         : Import successful, version not found
+   ipython         : Import successful, version not found
+   transformers    : Import successful, version not found
+   datasets        : Import successful, version not found
+   accelerate      : Import successful, version not found
+   diffusers       : Import successful, version not found
+
+📦 Special Package Checks
+----------------------------------------
+   Checking TensorRT...
+   TensorRT Version: 10.3.0
+   Checking PyTorch CUDA...
+   PyTorch CUDA Available: True
+   GPU Count: 1
+   Checking ONNX Runtime...
+   ONNX Runtime: Not available
+
+📋 Conda Package List (Key Packages Only)
+----------------------------------------
+   Package Name                Version       Build Channel
+   ------------------------------------------------------------
+   matplotlib               3.10.3       pypi_0       pypi
+   numpy                    1.26.1       pypi_0       pypi
+   onnx                     1.18.0       pypi_0       pypi
+   onnx-graphsurgeon        0.5.8        pypi_0       pypi
+   onnxruntime-gpu          1.20.0       pypi_0       pypi
+   opencv-python            4.6.0.66     pypi_0       pypi
+   pandas                   2.3.1        pypi_0       pypi
+   pillow                   11.3.0       pypi_0       pypi
+   safetensors              0.5.3        pypi_0       pypi
+   scipy                    1.15.3       pypi_0       pypi
+   torch                    2.5.0a0+872d pypi_0       pypi
+   torchvision              0.22.1       pypi_0       pypi
+
+============================================================
+🎉 Environment inspection completed!
+============================================================

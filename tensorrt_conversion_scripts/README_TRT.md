@@ -1,8 +1,17 @@
 # JETSON ORIN TRT SETUP
 
+## 🏆 Best Practice
+Keep ONNX/PyTorch Files as Source of Truth
+Create engine files on-demand as needed for testing/benchmarking
 
-Setup trt
+```
+MODEL_VERSION="v1.2.3"
+TENSORRT_VERSION="10.3.0"
+TARGET_GPU="jetson_orin"
+```
 
+
+## Setup trt
 
 apt install packages
 

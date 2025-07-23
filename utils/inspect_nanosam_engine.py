@@ -8,12 +8,6 @@ python /home/copter/jetson_benchmark/utils/inspect_nanosam_engine.py \
 --mask_decoder "/home/copter/engine_models/nvidia_nanosam_mask_decoder_fp16.engine"
 """
 
-#!/usr/bin/env python3
-"""
-Script to inspect TensorRT engine files and show their tensor names and shapes.
-This helps debug tensor name mismatches in NanoSAM engines.
-"""
-
 import tensorrt as trt
 import argparse
 import sys

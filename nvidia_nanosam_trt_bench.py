@@ -1,6 +1,7 @@
 """
 Requiremnts:
 TensorRT (10.3.0) engine
+pip install pycuda
 
 
 Usage:
@@ -11,7 +12,13 @@ python -c "import tensorrt; print(f'TensorRT version: {tensorrt.__version__}')"
   
 ### NVIDIA Benches
 # FP16
-...
+python /home/copter/jetson_benchmark/nvidia_nanosam_trt_bench.py \
+  --image_encoder_path "/home/copter/engine_models/nvidia_nanosam_resnet18_image_encoder_fp16.engine" \
+  --mask_decoder_path "/home/copter/engine_models/nvidia_nanosam_mask_decoder_fp16.engine" \
+  --img_folder "/home/copter/jetson_benchmark/images/*.png" \
+  --device cuda \
+  --num_runs 50 \
+  --output_csv "/home/copter/jetson_benchmark/output/nvidia_nanosam_direct_trt_bench_fp16.csv"
 
 #FP32
 python /home/copter/jetson_benchmark/nvidia_nanosam_trt_bench.py \
@@ -20,7 +27,7 @@ python /home/copter/jetson_benchmark/nvidia_nanosam_trt_bench.py \
   --img_folder "/home/copter/jetson_benchmark/images/*.png" \
   --device cuda \
   --num_runs 50 \
-  --output_csv "/home/copter/jetson_benchmark/output/nanosam_direct_trt_bench_fp32.csv"
+  --output_csv "/home/copter/jetson_benchmark/output/nvidia_nanosam_direct_trt_bench_fp32.csv"
 """
 
 import argparse

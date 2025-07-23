@@ -181,3 +181,36 @@ python ./nanosam_bench.py \
   --num_runs 50 \
   --output_csv "/home/copter/jetson_benchmark/output/nanosam_bench_fp16_0718T1038.csv"
 ```
+
+
+
+## Clean Eviroinments
+
+``` bash
+conda deactivate
+conda remove -n fastsam_clean --all -yy
+conda create -n fastsam_clean python=3.10 -y
+conda activate fastsam_clean
+
+# Now install the CUDA PyTorch
+pip3 install --no-cache https://developer.download.nvidia.com/compute/redist/jp/v61/pytorch/torch-2.5.0a0+872d972e41.nv24.08.17622132-cp310-cp310-linux_aarch64.whl
+
+# download torch 0.2.0 (compatible with jp61 torch)
+cd ~/vision/
+python3 setup.py install
+
+# Reinstall other packages
+pip install ultralytics onnx onnx-graphsurgeon Pillow timm numpy==1.26.1 
+pip3 install --no-deps https://github.com/ultralytics/assets/releases/download/v0.0.0/onnxruntime_gpu-1.20.0-cp310-cp310-linux_aarch64.whl
+
+
+# COPY over trt into your chosen conda env
+ls /usr/lib/python3.10/dist-packages/tensorrt/tensorrt.so
+cp -r /usr/lib/python3.10/dist-packages/tensorrt* $CONDA_PREFIX/lib/python3.10/site-packages/
+python -c "import tensorrt; print(tensorrt.__version__)"
+
+# C++ Core Abort Dumps
+conda install -c conda-forge libstdcxx-ng=12
+# Verify with 
+strings /home/copter/miniconda3/envs/tensorrt/lib/libstdc++.so.6 | grep GLIBCXX_3.4.30
+```
