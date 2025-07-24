@@ -182,6 +182,92 @@ python ./nanosam_bench.py \
   --output_csv "/home/copter/jetson_benchmark/output/nanosam_bench_fp16_0718T1038.csv"
 ```
 
+# OPENCV Build Jetson Specific
+
+```
+# Remove pip-installed OpenCV
+pip3 uninstall opencv-python opencv-contrib-python opencv-python-headless -y
+
+# Remove apt-installed OpenCV packages
+sudo apt remove --purge python3-opencv libopencv-dev opencv-data opencv-licenses opencv-samples-data
+sudo apt remove --purge libopencv-*
+sudo apt autoremove
+
+# -----------------------
+
+cd ~/opencv/build
+sudo rm -rf * # Cleans out all build files
+cd ~/opencv_contrib
+cd ~
+sudo rm -rf opencv opencv_contrib opencv.zip opencv_contrib.zip
+
+# ----------------------
+
+wget -O opencv.zip https://github.com/opencv/opencv/archive/refs/tags/4.8.0.zip
+wget -O opencv_contrib.zip https://github.com/opencv/opencv_contrib/archive/refs/tags/4.8.0.zip
+unzip opencv.zip
+unzip opencv_contrib.zip
+
+mv opencv-4.8.0 opencv
+mv opencv_contrib-4.8.0 opencv_contrib
+
+# ----------------------
+
+cd ~/opencv
+mkdir build
+cd build
+
+# IMPORTANT: Adjust CUDA_ARCH_BIN for your specific Jetson model!
+# For Orin series (Orin Nano, Orin NX, AGX Orin) on JetPack 6.x:
+CUDA_ARCH_BIN="8.7"
+
+cmake \
+    -D CMAKE_BUILD_TYPE=RELEASE \
+    -D CMAKE_INSTALL_PREFIX=/usr/local \
+    -D WITH_CUDA=ON \
+    -D WITH_CUDNN=ON \
+    -D CUDA_ARCH_BIN="${CUDA_ARCH_BIN}" \
+    -D CUDA_ARCH_PTX="" \
+    -D ENABLE_FAST_MATH=ON \
+    -D CUDA_FAST_MATH=ON \
+    -D WITH_CUBLAS=ON \
+    -D WITH_LIBV4L=ON \
+    -D WITH_GSTREAMER=ON \
+    -D WITH_QT=OFF \
+    -D BUILD_opencv_python3=ON \
+    -D BUILD_opencv_python2=OFF \
+    -D BUILD_TESTS=OFF \
+    -D BUILD_PERF_TESTS=OFF \
+    -D BUILD_EXAMPLES=OFF \
+    -D OPENCV_GENERATE_PKGCONFIG=ON \
+    -D OPENCV_ENABLE_NONFREE=OFF \
+    -D OPENCV_EXTRA_MODULES_PATH=~/opencv_contrib/modules \
+    ..
+
+# Explanation of key flags:
+# -D CMAKE_BUILD_TYPE=RELEASE: Optimized build.
+# -D CMAKE_INSTALL_PREFIX=/usr/local: Installs to a standard location.
+# -D WITH_CUDA=ON: Enables CUDA support.
+# -D WITH_CUDNN=ON: Enables cuDNN support (deep learning primitives).
+# -D CUDA_ARCH_BIN="8.7": CRITICAL! Matches your Jetson's compute capability.
+# -D CUDA_ARCH_PTX="": Prevents PTX generation (saves space and time).
+# -D ENABLE_FAST_MATH=ON -D CUDA_FAST_MATH=ON -D WITH_CUBLAS=ON: Performance optimizations.
+# -D WITH_LIBV4L=ON: For V4L2 camera support.
+# -D WITH_GSTREAMER=ON: Highly recommended for video processing on Jetson.
+# -D WITH_QT=OFF: Disables Qt GUI support. Set to ON if you need it, but it adds complexity and potentially build time.
+# -D BUILD_opencv_python3=ON: Builds Python 3 bindings.
+# -D OPENCV_ENABLE_NONFREE=OFF: Set to ON if you need non-free algorithms like SIFT/SURF.
+# -D OPENCV_EXTRA_MODULES_PATH=~/opencv_contrib/modules: Includes the contrib modules.
+
+# Start the compilation (this will take a LONG time, 2-4+ hours depending on your Jetson model)
+# The -j$(nproc) flag uses all available CPU cores.
+make -j$(nproc)
+
+# Install the built libraries
+sudo make install
+sudo ldconfig
+```
+
 
 
 ## Clean Eviroinments
@@ -200,7 +286,7 @@ cd ~/vision/
 python3 setup.py install
 
 # Reinstall other packages
-pip install ultralytics onnx onnx-graphsurgeon Pillow timm numpy==1.26.1 
+pip install ultralytics onnx onnx-graphsurgeon Pillow timm  pycudanumpy==1.26.1 
 pip3 install --no-deps https://github.com/ultralytics/assets/releases/download/v0.0.0/onnxruntime_gpu-1.20.0-cp310-cp310-linux_aarch64.whl
 
 
@@ -214,3 +300,36 @@ conda install -c conda-forge libstdcxx-ng=12
 # Verify with 
 strings /home/copter/miniconda3/envs/tensorrt/lib/libstdc++.so.6 | grep GLIBCXX_3.4.30
 ```
+
+
+
+```
+# priors:
+sudo apt-get update
+sudo apt-get install -y libjpeg-dev zlib1g-dev libpython3-dev libopenblas-dev libavcodec-dev libavformat-dev libswscale-dev
+
+# conda stuff
+conda deactivate
+conda create -n trt_clean python=3.10 -y
+conda activate trt_clean
+
+# Now install the CUDA PyTorch
+pip3 install --no-cache https://developer.download.nvidia.com/compute/redist/jp/v61/pytorch/torch-2.5.0a0+872d972e41.nv24.08.17622132-cp310-cp310-linux_aarch64.whl
+
+# download torch 0.2.0 (compatible with jp61 torch)
+cd ~/vision/
+python3 setup.py install
+
+# Reinstall other packages
+pip install ultralytics  'opencv-python<4.9' onnx onnx-graphsurgeon Pillow timm  pycuda numpy==1.26.1 
+pip3 install --no-deps https://github.com/ultralytics/assets/releases/download/v0.0.0/onnxruntime_gpu-1.20.0-cp310-cp310-linux_aarch64.whl
+
+
+# COPY over trt into your chosen conda env
+ls /usr/lib/python3.10/dist-packages/tensorrt/tensorrt.so
+cp -r /usr/lib/python3.10/dist-packages/tensorrt* $CONDA_PREFIX/lib/python3.10/site-packages/
+python -c "import tensorrt; print(tensorrt.__version__)"
+
+```
+
+
