@@ -4,8 +4,8 @@ Script to inspect TensorRT (10.3.0) engine files and show their tensor names and
 This helps debug tensor name mismatches in NanoSAM engines.
 
 python /home/copter/jetson_benchmark/utils/inspect_nanosam_engine.py \
---image_encoder "/home/copter/engine_models/nvidia_nanosam_resnet18_image_encoder_fp16.engine" \
---mask_decoder "/home/copter/engine_models/nvidia_nanosam_mask_decoder_fp16.engine"
+--image_encoder "/home/copter/engine_models/nvidia_ai_iot_resnet18_image_encoder_fp32.engine" \
+--mask_decoder "/home/copter/engine_models/nvidia_ai_iot_mobile_sam_mask_decoder_fp32.engine"
 """
 
 import tensorrt as trt
