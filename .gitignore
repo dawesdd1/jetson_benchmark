@@ -4,6 +4,7 @@ weights/*
 trt_models/*
 tensorrt_engines/*
 tensor_rt_/cu*
+output/*
 
 
 # torchvision 0.2.0 repo

@@ -7,6 +7,14 @@ python /home/copter/jetson_benchmark/utils/tensorrt_engine_metadata.py \
 
 python /home/copter/jetson_benchmark/utils/tensorrt_engine_metadata.py \
   --engine_path "/home/copter/engine_models/zhudongwork_mobile_sam_encoder_fp16.engine"
+
+
+python /home/copter/jetson_benchmark/utils/tensorrt_engine_metadata.py \
+  --engine_path "/home/copter/engine_models/zhudongwork_mobile_sam_encoder_fp16_trt1030.engine"
+
+
+python /home/copter/jetson_benchmark/utils/tensorrt_engine_metadata.py \
+  --engine_path "/home/copter/engine_models/zhudongwork_mobile_sam_decoder_fp16_trt1030.engine"
 """
 
 import argparse

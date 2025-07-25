@@ -8,12 +8,12 @@ python -c "import tensorrt; print(f'TensorRT version: {tensorrt.__version__}')"
 ### Zhudongwork Benches
 # FP16
 python /home/copter/jetson_benchmark/zhudongwork_mobilesam_trt_bench.py \
-  --image_encoder_path "/home/copter/engine_models/mobile_sam_encoder_fp16.engine" \
-  --mask_decoder_path "/home/copter/engine_models/mobile_sam_mask_decoder_fp16.engine" \
+  --image_encoder_path "/home/copter/engine_models/zhudongwork_mobile_sam_encoder_fp16_trt1030.engine" \
+  --mask_decoder_path "/home/copter/engine_models/zhudongwork_mobile_sam_decoder_fp16_trt1030.engine" \
   --img_folder "/home/copter/jetson_benchmark/images/*.png" \
   --device cuda \
   --num_runs 50 \
-  --output_csv "/home/copter/jetson_benchmark/output/nanosam_bench_fp16.csv"
+  --output_csv "/home/copter/jetson_benchmark/output/zhudongwork_mobile_sam_bench_fp16.csv"
 
 #FP32
 python /home/copter/jetson_benchmark/zhudongwork_mobilesam_trt_bench.py \

@@ -38,6 +38,7 @@ sudo find / -name "tensorrt.so" 2>/dev/null
 export PYTHONPATH=$PYTHONPATH:/usr/lib/python3.10/dist-packages/
 python3 -c "import tensorrt; print(tensorrt.__version__)"
 # >> version  10.3.0
+unset PYTHONPATH
 
 # need to downgrade np
 pip uninstall numpy -y
