@@ -1,0 +1,53 @@
+# Use NVIDIA's official JetPack 5.1.1 base image (includes TensorRT 8.6.1)
+FROM dustynv/l4t-pytorch:r35.4.1
+
+# Set environment variables
+ENV DEBIAN_FRONTEND=noninteractive
+ENV PYTHONUNBUFFERED=1
+ENV CUDA_HOME=/usr/local/cuda
+ENV PATH=$CUDA_HOME/bin:$PATH
+ENV LD_LIBRARY_PATH=$CUDA_HOME/lib64:$LD_LIBRARY_PATH
+
+# Update system and install essential packages
+RUN apt-get update && apt-get install -y \
+    python3-dev \
+    python3-pip \
+    wget \
+    curl \
+    vim \
+    htop \
+    && rm -rf /var/lib/apt/lists/*
+
+# Update symbolic links for Python (container already has Python 3.8)
+RUN ln -sf /usr/bin/python3 /usr/bin/python
+
+# Upgrade pip
+RUN python3 -m pip install --upgrade pip
+
+# Install essential Python packages for benchmarking
+RUN pip3 install \
+    numpy \
+    opencv-python \
+    pillow \
+    matplotlib \
+    seaborn \
+    pandas \
+    tqdm \
+    pycuda \
+    tensorrt
+
+# Install additional benchmarking tools
+RUN pip3 install \
+    psutil \
+    GPUtil \
+    py3nvml \
+    tabulate
+
+# Create working directory
+WORKDIR /workspace
+
+# Copy your benchmark scripts and engine files
+COPY . /workspace/
+
+# Set default command
+CMD ["/bin/bash"]
