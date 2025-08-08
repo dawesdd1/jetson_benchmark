@@ -13,3 +13,4 @@ tensor_rt/mobilesam_trt_convert.py
 tensor_rt/cuda-keyring_1.1-1_all.deb
 tensor_rt/cusparselt-local-repo-ubuntu2204-0.7.1_1.0-1_amd64.deb
 tensor_rt/cudnn-local-repo-ubuntu2204-9.10.2_1.0-1_amd64.deb
+/home/copter/jetson_benchmark/notebooks_arm64/*.mp4
