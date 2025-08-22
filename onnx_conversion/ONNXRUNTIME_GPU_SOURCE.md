@@ -2,6 +2,12 @@
 
 https://aiinfra.visualstudio.com/PublicPackages/_artifacts/feed/ORT-Nightly/PyPI/onnxruntime-gpu/overview/1.23.0.dev20250725001
 
+## Recent methods
+https://docs.ultralytics.com/guides/nvidia-jetson/#install-ultralytics-package
+pip install https://github.com/ultralytics/assets/releases/download/v0.0.0/onnxruntime_gpu-1.20.0-cp310-cp310-linux_aarch64.whl
+
+
+
 ### (Shortcut) If Built Already
 
 ```
